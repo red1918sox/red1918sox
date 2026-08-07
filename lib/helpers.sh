@@ -105,7 +105,16 @@ function curlw () {
     netrc_opt=(--netrc-file "${TFENV_NETRC_PATH}");
   fi;
 
-  curl ${tls_opt[@]+"${tls_opt[@]}"} ${netrc_opt[@]+"${netrc_opt[@]}"} "$@";
+  # Optionally inject JFrog Artifactory auth. Neither is required: with
+  # neither set, curlw behaves exactly as a plain curl call.
+  local -a auth_opt=();
+  if [[ -n "${JFROG_TOKEN:-""}" ]]; then
+    auth_opt=(-H "Authorization: Bearer ${JFROG_TOKEN}");
+  elif [[ -n "${JFROG_USER:-""}" && -n "${JFROG_PASS:-""}" ]]; then
+    auth_opt=(-u "${JFROG_USER}:${JFROG_PASS}");
+  fi;
+
+  curl ${tls_opt[@]+"${tls_opt[@]}"} ${netrc_opt[@]+"${netrc_opt[@]}"} ${auth_opt[@]+"${auth_opt[@]}"} "$@";
 };
 export -f curlw;
 
